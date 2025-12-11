@@ -1,0 +1,30 @@
+{
+  "tests": [
+    {
+      "name": "Get all polls",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "polls": "array"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Vote on poll",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "poll_id": 1,
+        "option_id": 1
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true,
+        "options": "array",
+        "totalVotes": "number"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

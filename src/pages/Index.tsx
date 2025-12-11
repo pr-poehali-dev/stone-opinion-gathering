@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +8,7 @@ import Icon from '@/components/ui/icon';
 interface Poll {
   id: number;
   question: string;
-  options: { text: string; votes: number }[];
+  options: { id: number; text: string; votes: number }[];
   totalVotes: number;
   endDate: string;
 }
@@ -21,33 +21,29 @@ interface NewsItem {
   excerpt: string;
 }
 
+const API_URL = 'https://functions.poehali.dev/88aa3fd2-4e67-4f28-a393-a28756b91198';
+
 const Index = () => {
   const [activeSection, setActiveSection] = useState('home');
   const [joinButtonClicked, setJoinButtonClicked] = useState(false);
-  const [polls, setPolls] = useState<Poll[]>([
-    {
-      id: 1,
-      question: 'Должен ли камень иметь право голоса на всех уровнях власти?',
-      options: [
-        { text: 'Да, камень мудрее человека', votes: 156 },
-        { text: 'Только на местном уровне', votes: 89 },
-        { text: 'Нужно обсудить детали', votes: 45 }
-      ],
-      totalVotes: 290,
-      endDate: '2025-12-20'
-    },
-    {
-      id: 2,
-      question: 'Приоритет в бюджете: памятники камням или социальные программы?',
-      options: [
-        { text: 'Памятники камням', votes: 234 },
-        { text: 'Социальные программы', votes: 122 },
-        { text: 'Равное распределение', votes: 178 }
-      ],
-      totalVotes: 534,
-      endDate: '2025-12-25'
+  const [polls, setPolls] = useState<Poll[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPolls();
+  }, []);
+
+  const fetchPolls = async () => {
+    try {
+      const response = await fetch(API_URL);
+      const data = await response.json();
+      setPolls(data.polls);
+    } catch (error) {
+      console.error('Ошибка загрузки опросов:', error);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
   const news: NewsItem[] = [
     {
@@ -91,19 +87,31 @@ const Index = () => {
     }
   ];
 
-  const handleVote = (pollId: number, optionIndex: number) => {
-    setPolls(polls.map(poll => {
-      if (poll.id === pollId) {
-        const newOptions = [...poll.options];
-        newOptions[optionIndex].votes += 1;
-        return {
-          ...poll,
-          options: newOptions,
-          totalVotes: poll.totalVotes + 1
-        };
+  const handleVote = async (pollId: number, optionId: number) => {
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ poll_id: pollId, option_id: optionId })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setPolls(polls.map(poll => {
+          if (poll.id === pollId) {
+            return {
+              ...poll,
+              options: data.options,
+              totalVotes: data.totalVotes
+            };
+          }
+          return poll;
+        }));
       }
-      return poll;
-    }));
+    } catch (error) {
+      console.error('Ошибка голосования:', error);
+    }
   };
 
   return (
@@ -294,28 +302,32 @@ const Index = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {poll.options.map((option, index) => {
-                      const percentage = poll.totalVotes > 0 ? (option.votes / poll.totalVotes * 100).toFixed(1) : 0;
-                      return (
-                        <div key={index} className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-gray-900">{option.text}</span>
-                            <span className="text-sm text-gray-600 font-semibold">{percentage}%</span>
+                    {loading ? (
+                      <p className="text-center text-gray-500">Загрузка...</p>
+                    ) : (
+                      poll.options.map((option) => {
+                        const percentage = poll.totalVotes > 0 ? (option.votes / poll.totalVotes * 100).toFixed(1) : 0;
+                        return (
+                          <div key={option.id} className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium text-gray-900">{option.text}</span>
+                              <span className="text-sm text-gray-600 font-semibold">{percentage}%</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <Progress value={Number(percentage)} className="flex-1 h-3" />
+                              <Button
+                                size="sm"
+                                onClick={() => handleVote(poll.id, option.id)}
+                                className="bg-amber-500 hover:bg-amber-600 text-gray-900 font-semibold"
+                              >
+                                <Icon name="ThumbsUp" size={16} />
+                              </Button>
+                            </div>
+                            <p className="text-xs text-gray-500">{option.votes} голосов</p>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <Progress value={Number(percentage)} className="flex-1 h-3" />
-                            <Button
-                              size="sm"
-                              onClick={() => handleVote(poll.id, index)}
-                              className="bg-amber-500 hover:bg-amber-600 text-gray-900 font-semibold"
-                            >
-                              <Icon name="ThumbsUp" size={16} />
-                            </Button>
-                          </div>
-                          <p className="text-xs text-gray-500">{option.votes} голосов</p>
-                        </div>
-                      );
-                    })}
+                        );
+                      })
+                    )}
                   </CardContent>
                 </Card>
               ))}
