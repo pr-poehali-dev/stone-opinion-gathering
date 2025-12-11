@@ -199,7 +199,7 @@ const Index = () => {
           <section className="py-20 bg-white">
             <div className="container mx-auto px-4">
               <h2 className="text-4xl font-heading font-bold text-center text-gray-900 mb-4">
-                Почему камень > Толик
+                Почему камень {'>'} Толик
               </h2>
               <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
                 Научные доказательства превосходства камней над решениями Толика
