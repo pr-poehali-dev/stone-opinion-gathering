@@ -23,6 +23,7 @@ interface NewsItem {
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState('home');
+  const [joinButtonClicked, setJoinButtonClicked] = useState(false);
   const [polls, setPolls] = useState<Poll[]>([
     {
       id: 1,
@@ -137,8 +138,11 @@ const Index = () => {
                 </button>
               ))}
             </div>
-            <Button className="bg-amber-500 hover:bg-amber-600 text-gray-900 font-semibold">
-              Присоединиться
+            <Button 
+              className="bg-amber-500 hover:bg-amber-600 text-gray-900 font-semibold"
+              onClick={() => setJoinButtonClicked(true)}
+            >
+              {joinButtonClicked ? 'вы не уважаете Толика' : 'Присоединиться'}
             </Button>
           </div>
         </div>
@@ -165,9 +169,10 @@ const Index = () => {
                   <Button 
                     size="lg" 
                     className="bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold text-lg px-8 py-6 shadow-xl hover:shadow-2xl transition-all hover:scale-105"
+                    onClick={() => setJoinButtonClicked(true)}
                   >
                     <Icon name="Users" className="mr-2" />
-                    Вступить в партию
+                    {joinButtonClicked ? 'вы не уважаете Толика' : 'Вступить в партию'}
                   </Button>
                   <Button 
                     size="lg" 
